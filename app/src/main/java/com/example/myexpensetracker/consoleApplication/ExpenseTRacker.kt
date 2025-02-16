@@ -63,6 +63,21 @@ class ExpenseTracker
         }
     }
 
+    // Function to update provided USer details
+    private fun editUserDetails(userId : Int, userName : String? = null,
+        oldPassword : String? = null, newPassword : String? = null, incomeAmount : Float? = null): Response<User>
+    {
+        val user = getUserFromList(userId)?: return Response(FAILURE, null, "User not found!")
+        return when
+        {
+            userName != null -> { user.setName(userName) }
+            incomeAmount != null -> { user.setIncome (incomeAmount = incomeAmount) }
+            oldPassword != null && newPassword != null -> { user.setPassword(newPassword) }
+            else -> { Response(FAILURE_CODE, null, "Cannot Update User Details.") }
+        }
+    }
+
+
     fun mainMenu(scanner: Scanner)
     {
         println("Welcome to Personal Expense Tracker")
@@ -134,7 +149,6 @@ class ExpenseTracker
         {
             println(response.errorMessage)
         }
-
     }
 
     private fun userDetailMenu( scanner: Scanner, userId: Int)
@@ -169,6 +183,78 @@ class ExpenseTracker
             }
         }
     }
+
+    private fun userSettingsMenu( scanner: Scanner, userId: Int ) {
+        // Menu driven to handle User Login and Sign In
+        displayUserDetails(userId) // Display User Details inside the user Settings Menu to let hem known what details already available
+        while (true)
+        {
+            println("\n===== Setting Menu =====")
+            println("Enter the corresponding number to perform that Action")
+            println("1 -> Edit Name")
+            println("2 -> Change Password")
+            println("3 -> Set/Change Income")
+            println("4 -> Go Back to Main Menu")
+            print("Enter your choice: ")
+            when (InputValidator.getInteger(scanner, "Option"))
+            {
+                // Edit User Name section
+                1 -> {
+                    print("Enter User Name: ")
+                    scanner.nextLine() // To clear buffer in console
+                    val userName = scanner.nextLine()
+                    val response = editUserDetails(userId, userName = userName)
+                    if (response.responseCode == SUCCESS_CODE)
+                    {
+                        println(response.successMessage)
+                        response.data!!.displayUserDetails()
+                    } else
+                    {
+                        println(response.failureMessage)
+                    }
+                }
+                // Edit User Password section
+                2 -> {
+                    print("Enter Old Password: ")
+                    scanner.nextLine() // To clear buffer in console
+                    val oldPassword =
+                        scanner.nextLine() // Get old password to verify the user is authenticated
+                    print("Enter New Password: ")
+                    val newPassword = scanner.nextLine()
+                    val response = editUserDetails(userId = userId, oldPassword = oldPassword, newPassword = newPassword)
+                    if (response.responseCode == SUCCESS)
+                    {
+                        println(response.message)
+                        response.data!!.displayUserDetails()
+                    }
+                    else
+                    {
+                        println(response.message)
+                    }
+                }
+                // Edit User Income section
+                3 -> {
+                    print("Enter Income: ")
+                    val income = getFloatInput(scanner, "Amount")
+                    val response = editUserDetails(userId, incomeAmount = income)
+                    if (response.responseCode == SUCCESS)
+                    {
+                        println(response.message)
+                        response.data!!.displayUserDetails()
+                    }
+                    else
+                    {
+                        println(response.message)
+                    }
+                }
+                4 -> {
+                    break
+                }
+                else -> println("Invalid choice. Please enter a valid option.")
+            }
+        }
+    }
+
 }
 
 fun main()
